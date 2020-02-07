@@ -1,0 +1,36 @@
+version: '3'
+services:
+  ############# Kafka Broker + Zookeeper  ###############
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    expose:
+      - "9093"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9093,EXTERNAL://localhost:9092 # (1) Modify EXTERNAL ip address
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9093,EXTERNAL://0.0.0.0:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  #########################################################
+
+  ############### kafka-firebase-aggregator  ##############
+  kafka-firebase-aggregator:
+    image: tubskns/kafka-firebase-aggregator:0.3.1
+    volumes:
+      - ./firebase-admin.json:/kafka-firebase-aggregator/firebase-admin.json # (2) firebase config file
+    environment:
+      - FIREBASE_URL=https://database-name.firebaseio.com # <-- (3) specify url of firebase realtime database
+      - KAFKA_BROKER_URL=kafka:9093
+      - DATABASE_REF=root # <-- (4) specify a name for the database reference
+      - TOPICS=test1,test2 # <-- (5) specify the topics for the aggregator to subscribe
+  ########################################################
