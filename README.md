@@ -1,4 +1,4 @@
-## kafka-firebase-aggregator
+## kafka-firebase-connector
 
 Bridge between Kafka and Firebase realtime database
 
